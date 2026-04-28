@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Intake — IT Helpdesk Triage Agent</title>
+  <style>
+    :root {
+      --bg: #0e1116;
+      --bg-2: #161b22;
+      --fg: #e6edf3;
+      --muted: #8b949e;
+      --accent: #ff7a59;
+      --good: #3fb950;
+      --warn: #d29922;
+      --bad: #f85149;
+      --card: #1c2128;
+      --line: #30363d;
+      --mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      background: var(--bg); color: var(--fg);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-size: 18px; line-height: 1.55;
+    }
+    .deck {
+      scroll-snap-type: y mandatory;
+      overflow-y: scroll; height: 100vh;
+    }
+    .slide {
+      scroll-snap-align: start;
+      min-height: 100vh; padding: 4rem 5rem;
+      display: flex; flex-direction: column; justify-content: center;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+    }
+    .slide-num {
+      position: absolute; top: 1.5rem; right: 2rem;
+      color: var(--muted); font-family: var(--mono); font-size: 0.85rem;
+    }
+    h1 {
+      font-size: 3.2rem; line-height: 1.1; margin: 0 0 1rem 0;
+      letter-spacing: -0.02em;
+    }
+    h1 .accent { color: var(--accent); }
+    h2 {
+      font-size: 1.9rem; line-height: 1.2; margin: 0 0 1.5rem 0;
+      letter-spacing: -0.01em;
+    }
+    h2 .accent { color: var(--accent); }
+    h3 {
+      font-size: 1.15rem; margin: 1.2rem 0 0.5rem 0;
+      color: var(--accent); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    p, li { color: var(--fg); }
+    ul { padding-left: 1.5rem; }
+    li { margin: 0.4rem 0; }
+    .lede { font-size: 1.4rem; color: var(--muted); margin: 0; }
+    .grid-2 {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
+    }
+    .grid-3 {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 12px; padding: 1.4rem 1.6rem;
+    }
+    .card h3 { margin-top: 0; }
+    .stat {
+      font-size: 2.6rem; font-weight: 700; color: var(--accent);
+      font-family: var(--mono);
+      line-height: 1;
+    }
+    .stat-label {
+      color: var(--muted); font-size: 0.9rem; margin-top: 0.4rem;
+    }
+    code, pre, .mono { font-family: var(--mono); }
+    pre {
+      background: var(--bg-2); border: 1px solid var(--line);
+      border-radius: 8px; padding: 1rem 1.2rem;
+      overflow-x: auto; font-size: 0.9rem; line-height: 1.5;
+    }
+    .pill {
+      display: inline-block; padding: 0.18em 0.6em;
+      border: 1px solid var(--line); border-radius: 999px;
+      font-size: 0.78rem; color: var(--muted); margin-right: 0.4rem;
+      font-family: var(--mono);
+    }
+    .pill.good   { color: var(--good);   border-color: rgba(63,185,80,0.4); }
+    .pill.warn   { color: var(--warn);   border-color: rgba(210,153,34,0.4); }
+    .pill.bad    { color: var(--bad);    border-color: rgba(248,81,73,0.4); }
+    .pill.accent { color: var(--accent); border-color: rgba(255,122,89,0.4); }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .ascii {
+      font-family: var(--mono); font-size: 0.82rem;
+      white-space: pre; color: var(--fg);
+      background: var(--bg-2); border: 1px solid var(--line);
+      border-radius: 8px; padding: 1.2rem;
+      line-height: 1.4;
+    }
+    .footer-hint {
+      position: absolute; bottom: 1.2rem; left: 50%; transform: translateX(-50%);
+      color: var(--muted); font-size: 0.8rem;
+      font-family: var(--mono);
+    }
+    .sub {
+      color: var(--muted); font-size: 0.95rem;
+    }
+    .kbd {
+      font-family: var(--mono); font-size: 0.85rem;
+      padding: 0.15em 0.4em; border-radius: 4px;
+      background: var(--bg-2); border: 1px solid var(--line);
+    }
+    @media (max-width: 900px) {
+      .slide { padding: 3rem 2rem; }
+      h1 { font-size: 2.2rem; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- 1: Title -->
+  <section class="slide">
+    <div class="slide-num">01 · Title</div>
+    <p class="sub">Scenario 5 · Agentic Solution · Claude Agent SDK</p>
+    <h1>The <span class="accent">Intake</span></h1>
+    <p class="lede">An IT helpdesk triage agent that <strong>classifies</strong>, <strong>enriches</strong>, and <strong>routes</strong> — and only auto-resolves the two cases it has earned.</p>
+    <p class="sub" style="margin-top:2rem;">
+      Team: Intake One · Built on the Claude Agent SDK (TypeScript) · 200 requests/day · target time-to-first-response under 5 min on routine, under 15 min on escalations.
+    </p>
+    <div class="footer-hint">scroll ↓ or press space</div>
+  </section>
+
+  <!-- 2: The problem -->
+  <section class="slide">
+    <div class="slide-num">02 · Problem</div>
+    <h2>The problem we picked</h2>
+    <div class="grid-2">
+      <div>
+        <h3>Today</h3>
+        <ul>
+          <li>~200 inbound requests/day</li>
+          <li>3 channels — email, web form, chat</li>
+          <li>L1 rotation hand-triages everything</li>
+          <li>Median time-to-first-response: <strong>~3 hours</strong></li>
+          <li>Mistakes: misroutes, forgotten frozen accounts, password resets that should have escalated</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Goal</h3>
+        <ul>
+          <li>≤ 5 min on routine work</li>
+          <li>≤ 15 min on escalations</li>
+          <li><strong>0 missed escalations</strong> on the cases that matter (frozen, P1, phishing, exec)</li>
+          <li>Auditable from the log alone</li>
+          <li>Defensible to Legal before launch</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3: The mandate -->
+  <section class="slide">
+    <div class="slide-num">03 · Mandate</div>
+    <h2>The agent's job — <span class="accent">on one page</span></h2>
+    <div class="grid-3">
+      <div class="card">
+        <h3>Decides alone</h3>
+        <p class="sub">Only when ALL hold:</p>
+        <ul>
+          <li>Auto-resolvable KB hit (<span class="mono">KB-001</span> or <span class="mono">KB-005</span>)</li>
+          <li>Confidence ≥ 0.85</li>
+          <li>Impact = low</li>
+          <li>User not VIP, not frozen</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Always escalates</h3>
+        <ul>
+          <li>Confidence &lt; 0.85</li>
+          <li>VIP, frozen, exec mention</li>
+          <li>Phishing, P1, MFA</li>
+          <li>Unknown category (yes, valid output)</li>
+          <li>Medium/high dollar impact</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Never touches</h3>
+        <ul>
+          <li>Frozen accounts (any write)</li>
+          <li>MFA reset / device replacement</li>
+          <li>Production P1 incidents</li>
+          <li>Phishing reports</li>
+          <li>Anything not in the catalog of categories</li>
+        </ul>
+      </div>
+    </div>
+    <p class="sub" style="margin-top:1.5rem;">Default deny. Adding to auto-resolve requires (a) ≥ 50 labeled examples, (b) category owner sign-off, (c) ≥ 95% accuracy on the eval suite.</p>
+  </section>
+
+  <!-- 4: Architecture -->
+  <section class="slide">
+    <div class="slide-num">04 · Architecture</div>
+    <h2>Coordinator + <span class="accent">3 specialists</span></h2>
+    <div class="ascii">                  ┌──────────────────────────────────┐
+  inbound ───────▶│      Coordinator (plain TS)      │
+  request         │  - parses input                  │
+                  │  - calls Classifier              │
+                  │  - calls Enricher                │
+                  │  - applies escalation rules      │
+                  │  - hands a STRUCTURED PLAN to    │
+                  │    the Resolver                  │
+                  └──────┬───────┬───────┬───────────┘
+                         │       │       │
+                         ▼       ▼       ▼
+                  ┌─────────┐ ┌────────┐ ┌──────────┐
+                  │Classify │ │Enrich  │ │Resolve   │
+                  │subagent │ │subagent│ │(WRITE)   │
+                  │(2 tools)│ │(2 tools│ │(2 tools) │
+                  └─────────┘ └────────┘ └──────────┘
+                       │           │          │
+                       ▼           ▼          ▼
+                   search_kb  lookup_user  auto_resolve
+                   get_kb     read_ticket  route_ticket
+                              _history</div>
+    <p class="sub" style="margin-top:1rem;">Each specialist stays under the 5-tool reliability cliff. Subagents do <strong>not</strong> inherit context — every prompt is built explicitly by the coordinator.</p>
+  </section>
+
+  <!-- 5: The architecture's core insight -->
+  <section class="slide">
+    <div class="slide-num">05 · Core insight</div>
+    <h2>The Resolver <span class="accent">never sees the body</span></h2>
+    <div class="grid-2">
+      <div>
+        <h3>Why this matters</h3>
+        <p>Prompt injection lives in attacker-controlled prose. If the write-capable subagent reads the inbound request, every clever instruction in the body is a potential foothold.</p>
+        <p>So we don't let it.</p>
+        <h3>How</h3>
+        <ul>
+          <li>Classifier sees the body — it has to.</li>
+          <li>Enricher sees only the user identifier and the classification.</li>
+          <li>Resolver sees only the structured plan: <span class="mono">{kind, queue, summary, kb_id}</span></li>
+        </ul>
+      </div>
+      <div>
+        <h3>What this buys</h3>
+        <p><span class="pill good">structural</span> An attacker can hijack the classifier's reasoning, but the worst they can change is the <em>label</em>. Humans see and approve the actual write.</p>
+        <p><span class="pill good">auditable</span> The coordinator's plan is plain TypeScript output — auditable, replayable, diffable.</p>
+        <p><span class="pill good">composable</span> The brake (next slide) layers on top of this: hook + canUseTool catch what slipped through the structure.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6: The brake -->
+  <section class="slide">
+    <div class="slide-num">06 · The brake</div>
+    <h2>Two layers: <span class="accent">hard stop</span> + slow stop</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>PreToolUse hook (hard stop)</h3>
+        <p class="sub">Deterministic. Runs <em>before</em> canUseTool. Cannot be argued with.</p>
+        <ul>
+          <li>Frozen account → deny</li>
+          <li>PII patterns (SSN, credit card, IBAN) → deny</li>
+          <li>Exec mention on auto-resolve → deny</li>
+          <li>Prompt-injection patterns in tool input → deny</li>
+          <li>Phishing routed to wrong queue → deny</li>
+          <li>P1 routed to wrong queue → deny</li>
+          <li>KB not in auto-resolve whitelist → deny</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>canUseTool callback (slow stop)</h3>
+        <p class="sub">Policy-as-code: category × confidence × impact × VIP.</p>
+        <pre>if (vip)                            → escalate
+if (confidence &lt; 0.7)               → escalate
+if (category in ALWAYS_ESCALATE)    → escalate
+if (impact === "high")              → escalate
+if (impact === "medium"
+    &amp;&amp; confidence &lt; 0.9)            → escalate
+if (confidence &lt; 0.85)              → escalate
+otherwise                           → allow</pre>
+      </div>
+    </div>
+    <p class="sub" style="margin-top:1rem;">Both layers run on the Resolver only. The Classifier and Enricher are read-only; the SDK's allowed-tools list keeps them that way.</p>
+  </section>
+
+  <!-- 7: Tools -->
+  <section class="slide">
+    <div class="slide-num">07 · Tools</div>
+    <h2>6 tools, <span class="accent">each ≤ 3 per specialist</span></h2>
+    <table>
+      <thead><tr><th>Tool</th><th>Specialist</th><th>What it does NOT do</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">search_kb</span></td><td>Classifier</td><td>fetch full body — use <span class="mono">get_kb_article</span></td></tr>
+        <tr><td><span class="mono">get_kb_article</span></td><td>Classifier</td><td>search by free text</td></tr>
+        <tr><td><span class="mono">lookup_user</span></td><td>Enricher</td><td>change attributes; resolve display names</td></tr>
+        <tr><td><span class="mono">read_ticket_history</span></td><td>Enricher</td><td>return ticket bodies (privacy)</td></tr>
+        <tr><td><span class="mono">auto_resolve</span> ⚠</td><td>Resolver</td><td>handle MFA, frozen, P1, phishing, non-whitelist KB</td></tr>
+        <tr><td><span class="mono">route_ticket</span> ⚠</td><td>Resolver</td><td>send messages to users; close tickets</td></tr>
+      </tbody>
+    </table>
+    <p class="sub" style="margin-top:1rem;">All errors return <span class="mono">{ isError: true, content: [{type:"text", text: JSON.stringify({reason_code, guidance})}] }</span>. The agent can branch on the reason code and recover. Throwing would kill the loop.</p>
+  </section>
+
+  <!-- 8: Evals -->
+  <section class="slide">
+    <div class="slide-num">08 · Evals</div>
+    <h2>Scorecard + <span class="accent">adversarial</span> + brake unit checks</h2>
+    <div class="grid-3">
+      <div class="card">
+        <h3>Brake unit checks</h3>
+        <div class="stat">16 / 16</div>
+        <div class="stat-label">deterministic, no API key</div>
+        <p class="sub" style="margin-top:0.6rem;">Pattern detection, PII, escalation rule table. Fast. CI gate.</p>
+      </div>
+      <div class="card">
+        <h3>Regular suite</h3>
+        <div class="stat">12 rows</div>
+        <div class="stat-label">stratified across 11 categories</div>
+        <p class="sub" style="margin-top:0.6rem;">Metrics: accuracy, action correctness, queue correctness, false-confidence rate, escalation precision/recall.</p>
+      </div>
+      <div class="card">
+        <h3>Adversarial suite</h3>
+        <div class="stat">10 rows</div>
+        <div class="stat-label">probes for misrouting & leakage</div>
+        <p class="sub" style="margin-top:0.6rem;">Prompt injection, exec impersonation, frozen account, PII, urgency bait, looks-routine-isn't legal exposure.</p>
+      </div>
+    </div>
+    <p class="sub" style="margin-top:1.5rem;">Mandate targets: <span class="pill warn">accuracy ≥ 92%</span> <span class="pill warn">false-confidence ≤ 2%</span> <span class="pill warn">adversarial pass ≥ 98%</span> <span class="pill bad">missed escalations = 0</span></p>
+  </section>
+
+  <!-- 9: Evidence -->
+  <section class="slide">
+    <div class="slide-num">09 · Evidence</div>
+    <h2>What's in the repo</h2>
+    <pre>docs/mandate.md                 challenge 1 — one-page contract
+docs/adr/0001-architecture.md   challenge 2 — diagram + decisions
+src/tools/index.ts              challenge 3 — 6 custom MCP tools
+src/agents/{classifier,         challenge 4 — three specialists with
+  enricher,resolver}.ts                       validation-retry loops
+src/coordinator.ts              deterministic orchestration (no LLM)
+src/brake.ts                    challenge 5 — hook + canUseTool
+evals/dataset.json              challenge 7 — 12 stratified rows
+evals/adversarial.json          challenge 6 — 10 attack rows
+evals/run.ts                    eval harness, JSON reports per run
+evals/unit-brake.ts             16 deterministic brake checks
+logs/                           append-only JSONL — replayable</pre>
+    <p class="sub" style="margin-top:1rem;">Every decision logs: input, classification, enrichment, plan, resolver action, hook events, retry counts. Replayable from log alone.</p>
+  </section>
+
+  <!-- 10: What we'd do next -->
+  <section class="slide">
+    <div class="slide-num">10 · What's next</div>
+    <h2>If we had more time</h2>
+    <div class="grid-2">
+      <div>
+        <h3>Highest leverage</h3>
+        <ul>
+          <li><strong>The Loop (challenge 8).</strong> Human overrides → labeled examples → next eval run + few-shot.</li>
+          <li><strong>Larger eval set.</strong> 50/category before any auto-resolve expansion.</li>
+          <li><strong>Hook-replay in evals.</strong> Score "would this have leaked PII", not just queue.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Honest about tape</h3>
+        <ul>
+          <li>Synthetic ticket history is a hardcoded count.</li>
+          <li>"Queues" are append-only JSONL files.</li>
+          <li>No live channel ingestion yet.</li>
+          <li>Cost / latency tracking not in CI.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11: Close -->
+  <section class="slide">
+    <div class="slide-num">11 · Close</div>
+    <h2>The agent makes a <span class="accent">real decision</span></h2>
+    <p class="lede">Classify · enrich · route · sometimes act. Two layers of brake. Three specialists. One auditable coordinator. Zero attacker prose ever reaches a write tool.</p>
+    <div style="margin-top:2rem;">
+      <span class="pill accent">Mandate</span>
+      <span class="pill accent">ADR</span>
+      <span class="pill accent">6 tools</span>
+      <span class="pill accent">3 subagents</span>
+      <span class="pill accent">PreToolUse hook</span>
+      <span class="pill accent">canUseTool</span>
+      <span class="pill accent">Validation-retry</span>
+      <span class="pill accent">22 eval rows</span>
+      <span class="pill accent">16 brake checks</span>
+      <span class="pill accent">JSONL audit</span>
+    </div>
+    <p class="sub" style="margin-top:3rem;">Run it: <span class="kbd">npm run eval:brake</span> · <span class="kbd">npm run triage -- evals/sample-ticket.json</span> · <span class="kbd">npm run eval:full</span></p>
+  </section>
+
+</div>
+</body>
+</html>
