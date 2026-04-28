@@ -1,0 +1,66 @@
+{
+  "users": [
+    {
+      "id": "U001",
+      "email": "alice.rossi@example.com",
+      "name": "Alice Rossi",
+      "department": "Engineering",
+      "manager": "U010",
+      "status": "active",
+      "mfa_enrolled": true,
+      "frozen": false
+    },
+    {
+      "id": "U002",
+      "email": "bob.bianchi@example.com",
+      "name": "Bob Bianchi",
+      "department": "Sales",
+      "manager": "U011",
+      "status": "active",
+      "mfa_enrolled": false,
+      "frozen": false
+    },
+    {
+      "id": "U003",
+      "email": "carla.verdi@example.com",
+      "name": "Carla Verdi",
+      "department": "Finance",
+      "manager": "U012",
+      "status": "active",
+      "mfa_enrolled": true,
+      "frozen": true,
+      "frozen_reason": "Pending HR investigation — opened 2026-04-20"
+    },
+    {
+      "id": "U004",
+      "email": "dario.neri@example.com",
+      "name": "Dario Neri",
+      "department": "Engineering",
+      "manager": "U010",
+      "status": "active",
+      "mfa_enrolled": true,
+      "frozen": false
+    },
+    {
+      "id": "U005",
+      "email": "elena.gallo@example.com",
+      "name": "Elena Gallo",
+      "department": "C-Level",
+      "title": "CEO",
+      "status": "active",
+      "mfa_enrolled": true,
+      "frozen": false,
+      "vip": true
+    }
+  ],
+  "queues": [
+    {"id": "Q-IDENTITY", "name": "Identity & Access", "description": "Password resets, MFA, account lifecycle"},
+    {"id": "Q-NETWORK", "name": "Network Ops", "description": "VPN, connectivity, DNS"},
+    {"id": "Q-WORKSTATION", "name": "Workstation Support", "description": "Laptop, peripherals, productivity apps"},
+    {"id": "Q-INFRA", "name": "Infrastructure (P1 capable)", "description": "Production systems, databases, on-call"},
+    {"id": "Q-SECURITY", "name": "Security Operations", "description": "Phishing, incidents, suspicious activity"},
+    {"id": "Q-PROCUREMENT", "name": "Procurement", "description": "Software licenses, hardware orders"},
+    {"id": "Q-AUTORESOLVE", "name": "Auto-Resolved", "description": "Closed by agent without human touch"},
+    {"id": "Q-ESCALATION", "name": "Human Escalation", "description": "Supervisor review queue"}
+  ]
+}

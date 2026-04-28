@@ -1,0 +1,27 @@
+{
+  "name": "intake-agent",
+  "version": "0.1.0",
+  "description": "IT Helpdesk triage agent built on the Claude Agent SDK. Scenario 5 — The Intake.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "triage": "tsx src/cli.ts",
+    "eval": "tsx evals/run.ts",
+    "eval:adversarial": "tsx evals/run.ts --suite adversarial",
+    "eval:full": "tsx evals/run.ts --suite full",
+    "eval:brake": "tsx evals/unit-brake.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.1.10",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

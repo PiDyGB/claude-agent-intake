@@ -1,0 +1,70 @@
+{
+  "articles": [
+    {
+      "id": "KB-001",
+      "title": "Password reset for AD-joined accounts",
+      "tags": ["password", "reset", "active-directory", "self-service"],
+      "category": "Identity",
+      "content": "Self-service password reset is available at https://reset.internal. Users must have enrolled in MFA. If MFA is not enrolled, escalate to Identity team. Common failure: account lockout after 5 attempts (auto-clears in 15 min).",
+      "auto_resolvable": true,
+      "auto_resolution_steps": ["confirm_user_identity", "trigger_reset_link", "log_resolution"]
+    },
+    {
+      "id": "KB-002",
+      "title": "VPN connection fails after corporate firmware update",
+      "tags": ["vpn", "network", "firmware"],
+      "category": "Network",
+      "content": "Known issue post 2026-Q1 firmware. Workaround: clear VPN cached config (~/.cisco/config) and reconnect. If still failing, escalate to Network ops.",
+      "auto_resolvable": false
+    },
+    {
+      "id": "KB-003",
+      "title": "Outlook profile corruption symptoms",
+      "tags": ["outlook", "email", "profile"],
+      "category": "Productivity",
+      "content": "Symptoms: 'Cannot open default folders' error. Fix: rebuild profile via Control Panel > Mail > Show Profiles. Workstation team owns this.",
+      "auto_resolvable": false
+    },
+    {
+      "id": "KB-004",
+      "title": "Production database read replica lag triage",
+      "tags": ["database", "production", "incident", "p1"],
+      "category": "Infrastructure",
+      "content": "Replica lag > 30s on production read replicas is a P1. Page DBA on-call via PagerDuty rotation 'db-prod'. Do NOT auto-resolve.",
+      "auto_resolvable": false
+    },
+    {
+      "id": "KB-005",
+      "title": "Software license request — standard catalog",
+      "tags": ["license", "software", "request"],
+      "category": "Procurement",
+      "content": "Standard licenses (Office, Slack, Zoom) auto-approved for active employees within budget envelope. Non-catalog software requires manager approval and Security review.",
+      "auto_resolvable": true,
+      "auto_resolution_steps": ["verify_employee_active", "check_catalog", "create_provisioning_ticket"]
+    },
+    {
+      "id": "KB-006",
+      "title": "Phishing email reporting",
+      "tags": ["security", "phishing", "email"],
+      "category": "Security",
+      "content": "Suspicious emails forwarded to phish@internal. SOC team investigates within 1h. Do NOT click links, do NOT auto-resolve, route to Security ops.",
+      "auto_resolvable": false
+    },
+    {
+      "id": "KB-007",
+      "title": "MFA token lost or device replaced",
+      "tags": ["mfa", "token", "identity"],
+      "category": "Identity",
+      "content": "User identity must be verified via secondary channel (manager confirmation or video call). Do NOT auto-reset MFA without verification.",
+      "auto_resolvable": false
+    },
+    {
+      "id": "KB-008",
+      "title": "Frozen account procedure",
+      "tags": ["frozen", "account", "compliance"],
+      "category": "Identity",
+      "content": "Accounts may be frozen pending HR / Legal review. NEVER take action on a frozen account (no password reset, no provisioning, no access changes). Escalate to Identity lead.",
+      "auto_resolvable": false
+    }
+  ]
+}
