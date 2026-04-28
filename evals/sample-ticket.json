@@ -1,0 +1,9 @@
+{
+  "id": "T-DEMO-001",
+  "channel": "email",
+  "subject": "Forgot my password",
+  "body": "Hi, I can't log in this morning. Can you reset my password?",
+  "from_email": "alice.rossi@example.com",
+  "from_user_id": "U001",
+  "received_at": "2026-04-28T08:14:00Z"
+}

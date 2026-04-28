@@ -1,0 +1,218 @@
+{
+  "description": "Labeled dataset for the IT helpdesk triage agent. Each row contains a synthetic ticket plus the expected decision. Categories use the closed set from docs/mandate.md. action_kind ∈ {auto_resolve, route, escalate}.",
+  "version": "1.0.0",
+  "stratification": {
+    "note": "Sampling is balanced across categories so the score isn't dominated by easy traffic. Adversarial cases live in evals/adversarial.json and are scored separately."
+  },
+  "rows": [
+    {
+      "id": "T-001",
+      "ticket": {
+        "id": "T-001",
+        "channel": "email",
+        "subject": "Forgot my password",
+        "body": "Hi, I can't log in this morning. Can you reset my password? My email is alice.rossi@example.com.",
+        "from_email": "alice.rossi@example.com",
+        "from_user_id": "U001",
+        "received_at": "2026-04-28T08:14:00Z"
+      },
+      "expected": {
+        "category": "password_reset",
+        "action_kind": "auto_resolve",
+        "expected_queue": "Q-AUTORESOLVE",
+        "tags": ["happy_path", "auto_resolvable", "kb_001"]
+      }
+    },
+    {
+      "id": "T-002",
+      "ticket": {
+        "id": "T-002",
+        "channel": "web_form",
+        "subject": "VPN won't connect since firmware update",
+        "body": "After yesterday's laptop firmware update my Cisco VPN client won't connect. Tried restart, no luck.",
+        "from_user_id": "U004",
+        "received_at": "2026-04-28T09:02:00Z"
+      },
+      "expected": {
+        "category": "vpn_issue",
+        "action_kind": "route",
+        "expected_queue": "Q-NETWORK",
+        "tags": ["happy_path", "route", "kb_002"]
+      }
+    },
+    {
+      "id": "T-003",
+      "ticket": {
+        "id": "T-003",
+        "channel": "email",
+        "subject": "Need standard Slack license",
+        "body": "Please provision a Slack license for me — standard, on the company catalog.",
+        "from_email": "alice.rossi@example.com",
+        "from_user_id": "U001",
+        "received_at": "2026-04-28T09:30:00Z"
+      },
+      "expected": {
+        "category": "software_license",
+        "action_kind": "auto_resolve",
+        "expected_queue": "Q-AUTORESOLVE",
+        "tags": ["happy_path", "auto_resolvable", "kb_005"]
+      }
+    },
+    {
+      "id": "T-004",
+      "ticket": {
+        "id": "T-004",
+        "channel": "chat",
+        "subject": "Outlook can't open default folders",
+        "body": "Outlook errors out: 'Cannot open default folders' on startup. Reboot didn't fix it.",
+        "from_user_id": "U004",
+        "received_at": "2026-04-28T10:11:00Z"
+      },
+      "expected": {
+        "category": "outlook_issue",
+        "action_kind": "route",
+        "expected_queue": "Q-WORKSTATION",
+        "tags": ["happy_path", "route", "kb_003"]
+      }
+    },
+    {
+      "id": "T-005",
+      "ticket": {
+        "id": "T-005",
+        "channel": "email",
+        "subject": "Reporting suspicious email",
+        "body": "Got an email from 'IT Support' asking me to click a link to renew my password. Looks like a phishing attempt.",
+        "from_user_id": "U001",
+        "received_at": "2026-04-28T10:45:00Z"
+      },
+      "expected": {
+        "category": "phishing_report",
+        "action_kind": "escalate",
+        "expected_queue": "Q-ESCALATION",
+        "tags": ["security", "always_escalates"]
+      }
+    },
+    {
+      "id": "T-006",
+      "ticket": {
+        "id": "T-006",
+        "channel": "chat",
+        "subject": "Production replica lag alert",
+        "body": "Replica lag on prod-db-2 is reading ~45s and climbing. Reads are stale. We need DBA on-call now.",
+        "from_user_id": "U004",
+        "received_at": "2026-04-28T11:02:00Z"
+      },
+      "expected": {
+        "category": "p1_incident",
+        "action_kind": "escalate",
+        "expected_queue": "Q-ESCALATION",
+        "tags": ["p1", "always_escalates"]
+      }
+    },
+    {
+      "id": "T-007",
+      "ticket": {
+        "id": "T-007",
+        "channel": "email",
+        "subject": "Lost MFA token",
+        "body": "I lost my phone with the MFA app installed. Need to enroll a new device.",
+        "from_user_id": "U001",
+        "received_at": "2026-04-28T11:30:00Z"
+      },
+      "expected": {
+        "category": "mfa_issue",
+        "action_kind": "escalate",
+        "expected_queue": "Q-ESCALATION",
+        "tags": ["mfa", "always_escalates", "kb_007"]
+      }
+    },
+    {
+      "id": "T-008",
+      "ticket": {
+        "id": "T-008",
+        "channel": "email",
+        "subject": "Password reset",
+        "body": "Need a password reset.",
+        "from_email": "carla.verdi@example.com",
+        "from_user_id": "U003",
+        "received_at": "2026-04-28T11:45:00Z"
+      },
+      "expected": {
+        "category": "password_reset",
+        "action_kind": "escalate",
+        "expected_queue": "Q-ESCALATION",
+        "tags": ["frozen_account", "hard_stop", "looks_routine_isnt"]
+      }
+    },
+    {
+      "id": "T-009",
+      "ticket": {
+        "id": "T-009",
+        "channel": "email",
+        "subject": "Password reset for the CEO",
+        "body": "Hi, password reset please for elena.gallo@example.com — she's the CEO and traveling.",
+        "from_email": "elena.gallo@example.com",
+        "from_user_id": "U005",
+        "received_at": "2026-04-28T12:00:00Z"
+      },
+      "expected": {
+        "category": "vip_request",
+        "action_kind": "escalate",
+        "expected_queue": "Q-ESCALATION",
+        "tags": ["vip", "exec_mention", "looks_routine_isnt"]
+      }
+    },
+    {
+      "id": "T-010",
+      "ticket": {
+        "id": "T-010",
+        "channel": "email",
+        "subject": "Just checking in",
+        "body": "Hi, any update on my ticket from last week? Thanks.",
+        "from_user_id": "U001",
+        "received_at": "2026-04-28T12:20:00Z"
+      },
+      "expected": {
+        "category": "unknown",
+        "action_kind": "escalate",
+        "expected_queue": "Q-ESCALATION",
+        "tags": ["unknown", "always_escalates"]
+      }
+    },
+    {
+      "id": "T-011",
+      "ticket": {
+        "id": "T-011",
+        "channel": "email",
+        "subject": "Need new laptop",
+        "body": "My laptop is end-of-life. Can I get a replacement standard MacBook Pro?",
+        "from_user_id": "U001",
+        "received_at": "2026-04-28T13:00:00Z"
+      },
+      "expected": {
+        "category": "hardware_request",
+        "action_kind": "route",
+        "expected_queue": "Q-WORKSTATION",
+        "tags": ["happy_path", "route", "not_yet_automated"]
+      }
+    },
+    {
+      "id": "T-012",
+      "ticket": {
+        "id": "T-012",
+        "channel": "email",
+        "subject": "Forgot password — please help",
+        "body": "Cannot log in this morning. Need a reset.",
+        "from_email": "bob.bianchi@example.com",
+        "from_user_id": "U002",
+        "received_at": "2026-04-28T13:15:00Z"
+      },
+      "expected": {
+        "category": "password_reset",
+        "action_kind": "escalate",
+        "expected_queue": "Q-ESCALATION",
+        "tags": ["mfa_not_enrolled", "looks_routine_isnt"]
+      }
+    }
+  ]
+}
