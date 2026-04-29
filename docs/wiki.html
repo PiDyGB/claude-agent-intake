@@ -248,8 +248,8 @@ blockquote p { margin: 0; }
     </ol>
   </nav>
   <footer>
-    Repo: <a href="../README.md">README</a> · <a href="mandate.md">Mandate</a> · <a href="adr/0001-architecture.md">ADR</a><br>
-    Codice: <a href="../src/coordinator.ts">coordinator</a> · <a href="../src/brake.ts">brake</a> · <a href="../src/tools/index.ts">tools</a><br>
+    Repo: <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/README.md">README</a> · <a href="mandate.md">Mandate</a> · <a href="adr/0001-architecture.md">ADR</a><br>
+    Codice: <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/coordinator.ts">coordinator</a> · <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/brake.ts">brake</a> · <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/tools/index.ts">tools</a><br>
     <br>
     Sorgenti: lezioni stese in conversazione,<br>compilate come wiki consultabile.
   </footer>
@@ -267,15 +267,15 @@ blockquote p { margin: 0; }
     <thead><tr><th>Tappa</th><th>Argomento</th><th>File del progetto</th></tr></thead>
     <tbody>
       <tr><td>1</td><td>Cos'è un AI agent (e perché non è un chatbot)</td><td>—</td></tr>
-      <tr><td>2</td><td>Il Claude Agent SDK in 5 minuti</td><td><a href="../package.json"><code>package.json</code></a></td></tr>
-      <tr><td>3</td><td>I Tool — come si dà a Claude funzioni custom</td><td><a href="../src/tools/index.ts"><code>src/tools/index.ts</code></a></td></tr>
+      <tr><td>2</td><td>Il Claude Agent SDK in 5 minuti</td><td><a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/package.json"><code>package.json</code></a></td></tr>
+      <tr><td>3</td><td>I Tool — come si dà a Claude funzioni custom</td><td><a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/tools/index.ts"><code>src/tools/index.ts</code></a></td></tr>
       <tr><td>4</td><td>L'agent loop — il cuore del meccanismo</td><td>—</td></tr>
-      <tr><td>5</td><td>Subagent — quando un agente solo non basta</td><td><a href="../src/agents/"><code>src/agents/*.ts</code></a></td></tr>
-      <tr><td>6</td><td>Structured output con Zod (validation-retry)</td><td><a href="../src/schemas/decision.ts"><code>src/schemas/decision.ts</code></a></td></tr>
-      <tr><td>7</td><td>Il Brake parte 1 — <code>PreToolUse</code> hook</td><td><a href="../src/brake.ts"><code>src/brake.ts</code></a></td></tr>
-      <tr><td>8</td><td>Il Brake parte 2 — <code>canUseTool</code> callback</td><td><a href="../src/brake.ts"><code>src/brake.ts</code></a></td></tr>
-      <tr><td>9</td><td>Il Coordinator — la colla deterministica</td><td><a href="../src/coordinator.ts"><code>src/coordinator.ts</code></a></td></tr>
-      <tr><td>10</td><td>Come si testa — Mandate, eval, adversarial</td><td><a href="../docs/mandate.md"><code>docs/mandate.md</code></a>, <a href="../evals/"><code>evals/</code></a></td></tr>
+      <tr><td>5</td><td>Subagent — quando un agente solo non basta</td><td><a href="https://github.com/PiDyGB/claude-agent-intake/tree/main/src/agents"><code>src/agents/*.ts</code></a></td></tr>
+      <tr><td>6</td><td>Structured output con Zod (validation-retry)</td><td><a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/schemas/decision.ts"><code>src/schemas/decision.ts</code></a></td></tr>
+      <tr><td>7</td><td>Il Brake parte 1 — <code>PreToolUse</code> hook</td><td><a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/brake.ts"><code>src/brake.ts</code></a></td></tr>
+      <tr><td>8</td><td>Il Brake parte 2 — <code>canUseTool</code> callback</td><td><a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/brake.ts"><code>src/brake.ts</code></a></td></tr>
+      <tr><td>9</td><td>Il Coordinator — la colla deterministica</td><td><a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/coordinator.ts"><code>src/coordinator.ts</code></a></td></tr>
+      <tr><td>10</td><td>Come si testa — Mandate, eval, adversarial</td><td><a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/docs/mandate.md"><code>docs/mandate.md</code></a>, <a href="https://github.com/PiDyGB/claude-agent-intake/tree/main/evals"><code>evals/</code></a></td></tr>
       <tr><td>+</td><td>Bonus — Architettura di produzione su AWS</td><td>(linee guida + diagramma)</td></tr>
     </tbody>
   </table>
@@ -344,7 +344,7 @@ blockquote p { margin: 0; }
   </table>
 
   <h3>Cosa c'è installato nel progetto</h3>
-  <p>Apri <a href="../package.json"><code>package.json</code></a>:</p>
+  <p>Apri <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/package.json"><code>package.json</code></a>:</p>
   <pre><code>"dependencies": {
   "@anthropic-ai/claude-agent-sdk": "^0.1.10",
   "zod": "^3.23.8"
@@ -382,11 +382,11 @@ for await (const message of query({
         <li><code>result</code> — il messaggio finale, con il testo conclusivo dell'agente</li>
       </ul>
     </li>
-    <li><strong><code>result.subtype</code>.</strong> Può essere <code>"success"</code>, <code>"error_max_turns"</code>, <code>"error_during_execution"</code>, ecc. Nel nostro codice gestiamo questi in <a href="../src/agents/resolver.ts"><code>src/agents/resolver.ts</code></a> — è importante perché un agent che si pianta a metà non deve far passare un'azione.</li>
+    <li><strong><code>result.subtype</code>.</strong> Può essere <code>"success"</code>, <code>"error_max_turns"</code>, <code>"error_during_execution"</code>, ecc. Nel nostro codice gestiamo questi in <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/agents/resolver.ts"><code>src/agents/resolver.ts</code></a> — è importante perché un agent che si pianta a metà non deve far passare un'azione.</li>
   </ol>
 
   <h3>Cosa abbiamo aggiunto NOI sopra l'SDK</h3>
-  <p>Ogni "specialista" del nostro progetto (<a href="../src/agents/classifier.ts"><code>classifier.ts</code></a>, <a href="../src/agents/enricher.ts"><code>enricher.ts</code></a>, <a href="../src/agents/resolver.ts"><code>resolver.ts</code></a>) è in fondo un wrapper attorno a una <code>query()</code>. Tutto il resto è:</p>
+  <p>Ogni "specialista" del nostro progetto (<a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/agents/classifier.ts"><code>classifier.ts</code></a>, <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/agents/enricher.ts"><code>enricher.ts</code></a>, <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/agents/resolver.ts"><code>resolver.ts</code></a>) è in fondo un wrapper attorno a una <code>query()</code>. Tutto il resto è:</p>
   <ul>
     <li>un <strong>system prompt</strong> focalizzato (insegna al classifier solo a classificare)</li>
     <li>un <strong><code>mcpServers</code></strong> in cui passiamo i nostri tool custom</li>
@@ -445,7 +445,7 @@ if (result.success) {
 
   <h4>1. Input dei tool</h4>
   <p>Quando Claude chiama <code>lookup_user("U001")</code>, l'argomento è un'<strong>ipotesi</strong> del modello. Lo schema Zod nei tool fa due cose: <em>valida</em> l'input prima che arrivi al tuo codice, e <em>documenta</em> al modello che forma ci si aspetta (lo schema viene tradotto in JSON Schema e mostrato a Claude).</p>
-  <p>Esempio dal nostro <a href="../src/tools/index.ts"><code>src/tools/index.ts</code></a>:</p>
+  <p>Esempio dal nostro <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/tools/index.ts"><code>src/tools/index.ts</code></a>:</p>
   <pre><code>tool(
   "lookup_user",
   "Look up a user record... DOES NOT: change any user attribute...",
@@ -461,7 +461,7 @@ if (result.success) {
   <p>Il terzo parametro è uno <strong>schema Zod inline</strong>. Garantisce che <code>args.id_or_email</code> sia <em>sempre</em> una stringa di 3-200 caratteri quando arriva al tuo handler. La <code>.describe()</code> viene mostrata a Claude come descrizione del campo.</p>
 
   <h4>2. Output dell'LLM quando vuoi JSON strutturato</h4>
-  <p>Nel nostro Classifier chiediamo a Claude di rispondere con un oggetto <code>Classification</code>. Ma Claude è un LLM: ogni tanto risponde con markdown attorno, sbaglia un campo. Lo schema Zod (<code>ClassificationSchema</code> in <a href="../src/schemas/decision.ts"><code>src/schemas/decision.ts</code></a>) è il guardrail: parsi l'output, se fallisce sai <em>esattamente</em> perché, e nel nostro design rimandiamo l'errore a Claude per fargli ritentare. È il <strong>validation-retry loop</strong> della <a href="#tappa-6">tappa 6</a>.</p>
+  <p>Nel nostro Classifier chiediamo a Claude di rispondere con un oggetto <code>Classification</code>. Ma Claude è un LLM: ogni tanto risponde con markdown attorno, sbaglia un campo. Lo schema Zod (<code>ClassificationSchema</code> in <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/schemas/decision.ts"><code>src/schemas/decision.ts</code></a>) è il guardrail: parsi l'output, se fallisce sai <em>esattamente</em> perché, e nel nostro design rimandiamo l'errore a Claude per fargli ritentare. È il <strong>validation-retry loop</strong> della <a href="#tappa-6">tappa 6</a>.</p>
 
   <h3>Come si legge uno schema del progetto</h3>
   <pre><code>export const CategorySchema = z.enum([
@@ -515,7 +515,7 @@ export type Classification = z.infer&lt;typeof ClassificationSchema&gt;;</code><
     <li>uno <strong>schema dell'input</strong> (quali argomenti, quali tipi)</li>
   </ul>
   <p>Quando Claude decide che gli serve quella funzione, emette un <em>tool call</em> — un blocco strutturato del tipo <code>{ name: "search_kb", input: { query: "vpn firmware update" } }</code>. L'SDK lo intercetta, esegue il tuo handler, prende il risultato e lo rimanda a Claude come "tool result". Da lì il modello continua il suo ragionamento.</p>
-  <p>Il nostro progetto ha <strong>6 tool</strong>, definiti tutti in <a href="../src/tools/index.ts"><code>src/tools/index.ts</code></a>.</p>
+  <p>Il nostro progetto ha <strong>6 tool</strong>, definiti tutti in <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/tools/index.ts"><code>src/tools/index.ts</code></a>.</p>
 
   <h3>Anatomia di un tool nel Claude Agent SDK</h3>
   <p>Un tool si definisce con la funzione <code>tool()</code> dell'SDK. Quattro argomenti:</p>
@@ -683,7 +683,7 @@ export const intakeServer = createSdkMcpServer({
       <tr><td><code>result</code></td><td>il messaggio finale: stop_reason, num_turns, costo</td><td>una volta sola, alla fine</td></tr>
     </tbody>
   </table>
-  <p>Il pezzo del nostro <a href="../src/agents/resolver.ts"><code>src/agents/resolver.ts</code></a> che legge questa sequenza:</p>
+  <p>Il pezzo del nostro <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/agents/resolver.ts"><code>src/agents/resolver.ts</code></a> che legge questa sequenza:</p>
   <pre><code>for await (const message of query({ prompt: userPrompt, options: {...} })) {
   if (message.type === "assistant") {
     for (const block of message.message.content) {
@@ -723,7 +723,7 @@ export const intakeServer = createSdkMcpServer({
     </tbody>
   </table>
 
-  <p>Nel nostro <a href="../docs/adr/0001-architecture.md"><code>ADR</code></a> c'è la sezione che spiega come trattare ciascuno nel coordinator:</p>
+  <p>Nel nostro <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/docs/adr/0001-architecture.md"><code>ADR</code></a> c'è la sezione che spiega come trattare ciascuno nel coordinator:</p>
   <ul>
     <li><code>success</code> con output che <strong>passa</strong> il validatore Zod → finalizza.</li>
     <li><code>success</code> con output che <strong>fallisce</strong> → retry (fino a N=3).</li>
@@ -829,7 +829,7 @@ export const intakeServer = createSdkMcpServer({
   </ol>
 
   <h3>Le tre query separate</h3>
-  <p>Quando guardi i tre file <a href="../src/agents/classifier.ts"><code>classifier.ts</code></a>, <a href="../src/agents/enricher.ts"><code>enricher.ts</code></a>, <a href="../src/agents/resolver.ts"><code>resolver.ts</code></a>, sotto le diverse logiche c'è la stessa struttura:</p>
+  <p>Quando guardi i tre file <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/agents/classifier.ts"><code>classifier.ts</code></a>, <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/agents/enricher.ts"><code>enricher.ts</code></a>, <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/agents/resolver.ts"><code>resolver.ts</code></a>, sotto le diverse logiche c'è la stessa struttura:</p>
   <pre><code>export async function classify(ticket: Ticket): Promise&lt;Classification&gt; {
   const userPrompt = costruisciPromptDallInput(ticket);
 
@@ -863,7 +863,7 @@ export const intakeServer = createSdkMcpServer({
 
   <p>Il <strong>Resolver — l'unico specialist con i tool di scrittura — non vede mai il testo originale del ticket</strong>.</p>
 
-  <p>Apri <a href="../src/agents/resolver.ts"><code>src/agents/resolver.ts</code></a> e guarda come costruiamo il <code>userPrompt</code> per il Resolver:</p>
+  <p>Apri <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/agents/resolver.ts"><code>src/agents/resolver.ts</code></a> e guarda come costruiamo il <code>userPrompt</code> per il Resolver:</p>
   <pre><code>const userPrompt = [
   `Request id: ${input.request_id}`,
   `User id: ${input.enrichment.user_id ?? "(unknown)"}`,
@@ -891,7 +891,7 @@ export const intakeServer = createSdkMcpServer({
   <p>Questa è una difesa <strong>strutturale</strong>, non probabilistica. <strong>Per arrivare a un'azione dannosa l'attaccante dovrebbe corrompere la <em>logica</em> del coordinator, non solo il prompt.</strong></p>
 
   <h3>Il coordinator come "glue" deterministica</h3>
-  <p>Il coordinator (file <a href="../src/coordinator.ts"><code>src/coordinator.ts</code></a>) è dove tutto si tiene insieme. <strong>Non è un agente.</strong> È TypeScript puro, senza chiamate al modello.</p>
+  <p>Il coordinator (file <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/coordinator.ts"><code>src/coordinator.ts</code></a>) è dove tutto si tiene insieme. <strong>Non è un agente.</strong> È TypeScript puro, senza chiamate al modello.</p>
   <p>Funzione cardine:</p>
   <pre><code>export async function triage(ticket: Ticket) {
   // step 0: pre-flight — pattern detection deterministica sul body
@@ -961,7 +961,7 @@ export const intakeServer = createSdkMcpServer({
   <p>Noi facciamo B.</p>
 
   <h3>Anatomia del nostro retry loop</h3>
-  <p>Apri <a href="../src/agents/classifier.ts"><code>src/agents/classifier.ts</code></a>:</p>
+  <p>Apri <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/agents/classifier.ts"><code>src/agents/classifier.ts</code></a>:</p>
   <pre><code>let last = "";
 let retries = 0;
 const maxRetries = 3;
@@ -1118,7 +1118,7 @@ return {
   <h3>Cosa intendiamo per "brake"</h3>
   <p>Fino a qui il sistema si fida del modello: il modello classifica, decide, e chiama un tool. Ma se sbaglia? Se Claude — magari corrotto da un prompt injection sottile, o semplicemente confuso — chiamasse <code>auto_resolve</code> su un account congelato? Sui sistemi a basso rischio puoi accettare il rischio. Sui sistemi che toccano account, soldi, sicurezza, no.</p>
   <p>Il <strong>brake</strong> è il livello di guardrail che <strong>non si fida del modello</strong>. È deterministico, è codice TypeScript puro, e ferma azioni pericolose <em>indipendentemente</em> da ciò che il modello ha deciso.</p>
-  <p>Il nostro brake ha <strong>due strati</strong> (<a href="../src/brake.ts"><code>src/brake.ts</code></a>):</p>
+  <p>Il nostro brake ha <strong>due strati</strong> (<a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/brake.ts"><code>src/brake.ts</code></a>):</p>
   <table>
     <thead><tr><th>Strato</th><th>Cosa fa</th><th>Quando si attiva</th></tr></thead>
     <tbody>
@@ -1183,7 +1183,7 @@ export const writeToolHook: HookCallback = async (input, toolUseID, context) =&g
   </table>
 
   <h3>Il nostro <code>writeToolHook</code>: i sei check</h3>
-  <p>Apri <a href="../src/brake.ts"><code>src/brake.ts</code></a> e segui i sei check in ordine. Ognuno è una <strong>invariante</strong> del Mandate.</p>
+  <p>Apri <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/brake.ts"><code>src/brake.ts</code></a> e segui i sei check in ordine. Ognuno è una <strong>invariante</strong> del Mandate.</p>
 
   <h4>Check 1 — Frozen account</h4>
   <pre><code>const userId = typeof args.user_id === "string" ? args.user_id : null;
@@ -1276,7 +1276,7 @@ const PII_PATTERNS = [
   { name: "iban", rx: /\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/i },
 ];</code></pre>
   <p>I pattern sono <strong>liste esplicite di regex</strong>. Niente magia. Aggiungerne uno è un PR di una riga. Sono auditabili da chiunque sappia leggere una regex.</p>
-  <p>Le funzioni pure sono utili anche perché possiamo testarle senza SDK e senza chiave API — sono nei 16 check <span class="kbd">npm run eval:brake</span> in <a href="../evals/unit-brake.ts"><code>evals/unit-brake.ts</code></a>.</p>
+  <p>Le funzioni pure sono utili anche perché possiamo testarle senza SDK e senza chiave API — sono nei 16 check <span class="kbd">npm run eval:brake</span> in <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/evals/unit-brake.ts"><code>evals/unit-brake.ts</code></a>.</p>
 
   <h3>Cosa fa l'agente quando l'hook nega</h3>
   <ol>
@@ -1346,7 +1346,7 @@ const myCallback: CanUseTool = async (toolName, input, options) =&gt; {
   </table>
 
   <h3><code>shouldEscalate</code>: la policy del Mandate come codice</h3>
-  <p>Apri <a href="../src/brake.ts"><code>src/brake.ts</code></a>. È la <strong>traduzione 1-a-1</strong> della policy table del Mandate:</p>
+  <p>Apri <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/src/brake.ts"><code>src/brake.ts</code></a>. È la <strong>traduzione 1-a-1</strong> della policy table del Mandate:</p>
   <pre><code>export type EscalationContext = {
   category: Category;
   confidence: number;
@@ -1397,7 +1397,7 @@ export function shouldEscalate(ctx: EscalationContext): string | null {
   </table>
 
   <h3>Vincolo di progetto: regole <strong>esplicite</strong>, non vaghe</h3>
-  <p>Dal <a href="../docs/mandate.md">Mandate</a>:</p>
+  <p>Dal <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/docs/mandate.md">Mandate</a>:</p>
   <blockquote><em>"Explicit escalation rules: category plus confidence threshold plus dollar-impact bucket, rather than vague rules like 'when the agent isn't sure.'"</em></blockquote>
   <p>"Confident" non è una soglia. È una sensazione del modello. <strong>Run dopo run il modello sarà "confident" su cose diverse.</strong> Le nostre regole hanno numeri concreti — <code>0.85</code>, <code>0.7</code>, <code>0.9</code> — e set chiusi. <strong>Sono un contratto.</strong></p>
 
@@ -1674,9 +1674,9 @@ export function shouldEscalate(ctx: EscalationContext): string | null {
   <table>
     <thead><tr><th>Suite</th><th>File</th><th>Cosa testa</th><th>Costa API key?</th></tr></thead>
     <tbody>
-      <tr><td>Brake unit checks</td><td><a href="../evals/unit-brake.ts"><code>evals/unit-brake.ts</code></a></td><td>logica deterministica del brake</td><td>no</td></tr>
-      <tr><td>Regular</td><td><a href="../evals/dataset.json"><code>evals/dataset.json</code></a></td><td>accuracy + escalation correctness</td><td>sì</td></tr>
-      <tr><td>Adversarial</td><td><a href="../evals/adversarial.json"><code>evals/adversarial.json</code></a></td><td>resistenza agli attacchi</td><td>sì</td></tr>
+      <tr><td>Brake unit checks</td><td><a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/evals/unit-brake.ts"><code>evals/unit-brake.ts</code></a></td><td>logica deterministica del brake</td><td>no</td></tr>
+      <tr><td>Regular</td><td><a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/evals/dataset.json"><code>evals/dataset.json</code></a></td><td>accuracy + escalation correctness</td><td>sì</td></tr>
+      <tr><td>Adversarial</td><td><a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/evals/adversarial.json"><code>evals/adversarial.json</code></a></td><td>resistenza agli attacchi</td><td>sì</td></tr>
     </tbody>
   </table>
 
@@ -1831,7 +1831,7 @@ check(
   </ul>
 
   <h3>Come gli SLO del Mandate si legano a tutto</h3>
-  <p>Il <a href="../docs/mandate.md">Mandate</a> dice:</p>
+  <p>Il <a href="https://github.com/PiDyGB/claude-agent-intake/blob/main/docs/mandate.md">Mandate</a> dice:</p>
   <blockquote>
     <p>- Classification accuracy: ≥ 92%<br>
     - Mis-escalation rate: ≤ 5%<br>
