@@ -31,6 +31,22 @@ const PII_PATTERNS: { name: string; rx: RegExp }[] = [
   { name: "iban", rx: /\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/i },
 ];
 
+/**
+ * Resources whose mere mention should bypass the auto-resolve fast path,
+ * regardless of how the classifier labelled the request. These are categories
+ * the Mandate calls out as deliberately not automated (M&A data, non-catalog
+ * software, anything compliance-sensitive).
+ */
+const SENSITIVE_RESOURCE_PATTERNS: RegExp[] = [
+  /\bm\s*&\s*a\b/i,
+  /\bmerger(?:s)?\b/i,
+  /\bacquisition(?:s)?\b/i,
+  /\bdata\s*room\b/i,
+  /\bnon[- ]catalog\b/i,
+  /\bprivileged\b/i,
+  /\bconfidential\b/i,
+];
+
 export type PatternHit = { kind: string; detail: string };
 
 export function detectInjection(text: string): PatternHit[] {
@@ -51,6 +67,15 @@ export function detectPII(text: string): PatternHit[] {
     kind: `pii_${p.name}`,
     detail: "redacted",
   }));
+}
+
+export function detectSensitiveResource(text: string): PatternHit[] {
+  const hits: PatternHit[] = [];
+  for (const rx of SENSITIVE_RESOURCE_PATTERNS) {
+    const m = text.match(rx);
+    if (m) hits.push({ kind: "sensitive_resource", detail: m[0] });
+  }
+  return hits;
 }
 
 // ─── PreToolUse hook: HARD STOP ──────────────────────────────────────────

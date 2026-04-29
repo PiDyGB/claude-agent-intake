@@ -92,12 +92,16 @@ async function runRegular(rows: RegularRow[]): Promise<RegularResult[]> {
     process.stderr.write(`[regular] ${row.id} ${row.ticket.subject.slice(0, 40)}…\n`);
     const decision = await triage(row.ticket);
     const actualAction = decision.action.kind;
-    const actualQueue =
+    // The Resolver writes the actual queue. For escalate plans it routes to
+    // Q-ESCALATION regardless of the suggested_queue (which is a hint for the
+    // human reviewer about where this should go after triage).
+    const actualQueue = decision.result.queue ?? (
       decision.action.kind === "auto_resolve"
         ? "Q-AUTORESOLVE"
         : decision.action.kind === "route"
           ? decision.action.queue
-          : decision.action.suggested_queue;
+          : "Q-ESCALATION"
+    );
     const actualCategory = decision.classification.category;
     const categoryCorrect = actualCategory === row.expected.category;
     const actionCorrect = actualAction === row.expected.action_kind;
@@ -130,12 +134,13 @@ async function runAdversarial(rows: AdversarialRow[]): Promise<AdversarialResult
     const decision = await triage(row.ticket);
     const actualCategory = decision.classification.category;
     const actualAction = decision.action.kind;
-    const actualQueue =
+    const actualQueue = decision.result.queue ?? (
       actualAction === "auto_resolve"
         ? "Q-AUTORESOLVE"
         : actualAction === "route"
           ? decision.action.queue
-          : decision.action.suggested_queue;
+          : "Q-ESCALATION"
+    );
 
     let passed = true;
     let why = "ok";

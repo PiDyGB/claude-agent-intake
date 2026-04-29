@@ -1,7 +1,13 @@
 import { classify } from "./agents/classifier.js";
 import { enrich } from "./agents/enricher.js";
 import { resolve, type ResolverResult } from "./agents/resolver.js";
-import { shouldEscalate, detectInjection } from "./brake.js";
+import {
+  shouldEscalate,
+  detectInjection,
+  detectPII,
+  detectSensitiveResource,
+  type PatternHit,
+} from "./brake.js";
 import {
   type Action,
   type Decision,
@@ -23,15 +29,25 @@ export async function triage(ticket: Ticket): Promise<Decision & { result: Resol
   const reasoning: string[] = [];
   reasoning.push(`Received request ${ticket.id} from channel ${ticket.channel}.`);
 
-  // Pre-classification: detect injection in the inbound body. Logged for
-  // visibility; the classifier still gets the original body but the resolver
-  // never will.
-  const injection = detectInjection(`${ticket.subject}\n${ticket.body}`);
-  if (injection.length > 0) {
+  // Pre-classification: deterministic scan over the inbound body for three
+  // classes of red flags. The classifier still gets the original body, but the
+  // resolver never will and the coordinator forces an escalate plan if any
+  // of these fire — independent of whatever the classifier returns.
+  const haystack = `${ticket.subject}\n${ticket.body}`;
+  const injection = detectInjection(haystack);
+  const pii = detectPII(haystack);
+  const sensitive = detectSensitiveResource(haystack);
+  const preflightHits = [...injection, ...pii, ...sensitive];
+  if (preflightHits.length > 0) {
     reasoning.push(
-      `Pre-flight injection scan flagged: ${injection.map((h) => h.kind).join(",")}.`,
+      `Pre-flight scan flagged: ${preflightHits.map((h) => h.kind).join(",")}.`,
     );
-    logEvent("injection_signal", { request_id: ticket.id, injection });
+    logEvent("injection_signal", {
+      request_id: ticket.id,
+      injection,
+      pii,
+      sensitive,
+    });
   }
 
   // Step 1: classify
@@ -47,8 +63,8 @@ export async function triage(ticket: Ticket): Promise<Decision & { result: Resol
     `Enricher → user_known=${enrichment.user_known} vip=${enrichment.vip} frozen=${enrichment.frozen}.`,
   );
 
-  // Step 3: deterministic plan
-  const plan = chooseAction(classification, enrichment, injection.length > 0);
+  // Step 3: deterministic plan. Any pre-flight hit forces an escalate.
+  const plan = chooseAction(classification, enrichment, preflightHits);
   reasoning.push(`Plan: ${plan.kind}${"queue" in plan ? ` → ${plan.queue}` : ""}.`);
 
   // Step 4: resolver subagent carries the plan out
@@ -83,7 +99,7 @@ export async function triage(ticket: Ticket): Promise<Decision & { result: Resol
 function chooseAction(
   classification: ReturnType<typeof classify> extends Promise<infer C> ? C : never,
   enrichment: ReturnType<typeof enrich> extends Promise<infer E> ? E : never,
-  injectionDetected: boolean,
+  preflightHits: PatternHit[],
 ): Action {
   // Hard escalations first.
   if (enrichment.frozen) {
@@ -99,13 +115,14 @@ function chooseAction(
     };
   }
 
-  if (injectionDetected) {
+  if (preflightHits.length > 0) {
+    const kinds = Array.from(new Set(preflightHits.map((h) => h.kind))).join(",");
     return {
       kind: "escalate",
-      reason: "Prompt-injection signal in inbound body.",
+      reason: `preflight:${kinds}`,
       suggested_queue: "Q-ESCALATION",
       suggested_summary:
-        `Suspicious instructions in body. Classified as ${classification.category}, sent for manual review.`.slice(
+        `Pre-flight scan flagged ${kinds}. Classified as ${classification.category}, sent for manual review.`.slice(
           0,
           300,
         ),
@@ -125,6 +142,25 @@ function chooseAction(
       reason: escalation,
       suggested_queue: suggestedQueueFor(classification.category),
       suggested_summary: classification.rationale.slice(0, 300),
+    };
+  }
+
+  // KB-001 applicability: self-service password reset requires the user to
+  // have enrolled in MFA. Without MFA the Identity team must verify identity
+  // through a secondary channel.
+  if (
+    classification.category === "password_reset" &&
+    enrichment.mfa_enrolled !== true
+  ) {
+    return {
+      kind: "escalate",
+      reason: "password_reset_requires_mfa_enrolled",
+      suggested_queue: "Q-IDENTITY",
+      suggested_summary:
+        `Password reset for user without MFA enrolled. Identity verification required.`.slice(
+          0,
+          300,
+        ),
     };
   }
 

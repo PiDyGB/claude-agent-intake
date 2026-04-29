@@ -2,7 +2,12 @@
  * Unit checks for the deterministic brake. No LLM involved. Validates that
  * pattern detectors and escalation rules behave as the Mandate prescribes.
  */
-import { detectInjection, detectPII, shouldEscalate } from "../src/brake.js";
+import {
+  detectInjection,
+  detectPII,
+  detectSensitiveResource,
+  shouldEscalate,
+} from "../src/brake.js";
 
 let failed = 0;
 function check(name: string, cond: boolean, detail?: string) {
@@ -62,6 +67,41 @@ check(
 check(
   "no PII false positive on plain text",
   detectPII("Hello world, just a routine note").length === 0,
+);
+
+// ─── Sensitive resource patterns ────────────────────────────────────────
+
+check(
+  "detects M&A mention",
+  detectSensitiveResource("Need access to the M&A data room license").some(
+    (h) => h.kind === "sensitive_resource",
+  ),
+);
+
+check(
+  "detects merger / acquisition",
+  detectSensitiveResource("Acquisition project files access please").some(
+    (h) => h.kind === "sensitive_resource",
+  ),
+);
+
+check(
+  "detects 'data room'",
+  detectSensitiveResource("Add me to the data room please").some(
+    (h) => h.kind === "sensitive_resource",
+  ),
+);
+
+check(
+  "detects 'non-catalog'",
+  detectSensitiveResource("Need a non-catalog license for engineering").some(
+    (h) => h.kind === "sensitive_resource",
+  ),
+);
+
+check(
+  "no false positive on routine license request",
+  detectSensitiveResource("Please assign a Slack license").length === 0,
 );
 
 // ─── Escalation rules ────────────────────────────────────────────────────
