@@ -217,6 +217,7 @@ pnpm-debug.log*
 # Local artifacts
 logs/*.jsonl
 !logs/.gitkeep
+evals/results/
 .env.local
 
 # OS

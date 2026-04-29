@@ -10,6 +10,8 @@
 
 Picked domain: **IT helpdesk**. Inbound on three channels (email, web form, chat), ~200 requests/day, hand-triaged today by an L1 rotation. The agent classifies, enriches, routes, and (in two narrow cases) auto-resolves. Everything else escalates to humans.
 
+> **Imparare il sistema da zero** — apri [docs/wiki.html](docs/wiki.html) nel browser. È una wiki self-contained (10 tappe + bonus su Zod + recap) che insegna AI agentica con il Claude Agent SDK partendo dal "cos'è un agent" e camminando attraverso tutto il codice di questo progetto.
+
 ## What We Built
 
 An end-to-end triage system on the **Claude Agent SDK** in TypeScript. The repo started empty (just hackathon briefs); it now contains:
