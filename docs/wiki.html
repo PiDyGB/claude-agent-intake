@@ -242,6 +242,7 @@ blockquote p { margin: 0; }
       <li><a href="#tappa-8"><span class="num">8</span>Il Brake — canUseTool</a></li>
       <li><a href="#tappa-9"><span class="num">9</span>Il Coordinator</a></li>
       <li><a href="#tappa-10"><span class="num">10</span>Gli eval</a></li>
+      <li><a href="#aws"><span class="num">·</span>Bonus — Produzione su AWS</a></li>
       <li><a href="#riassunto"><span class="num">·</span>Riassunto del curriculum</a></li>
       <li><a href="#prossimi-passi"><span class="num">·</span>Cosa studiare dopo</a></li>
     </ol>
@@ -275,6 +276,7 @@ blockquote p { margin: 0; }
       <tr><td>8</td><td>Il Brake parte 2 — <code>canUseTool</code> callback</td><td><a href="../src/brake.ts"><code>src/brake.ts</code></a></td></tr>
       <tr><td>9</td><td>Il Coordinator — la colla deterministica</td><td><a href="../src/coordinator.ts"><code>src/coordinator.ts</code></a></td></tr>
       <tr><td>10</td><td>Come si testa — Mandate, eval, adversarial</td><td><a href="../docs/mandate.md"><code>docs/mandate.md</code></a>, <a href="../evals/"><code>evals/</code></a></td></tr>
+      <tr><td>+</td><td>Bonus — Architettura di produzione su AWS</td><td>(linee guida + diagramma)</td></tr>
     </tbody>
   </table>
 
@@ -1847,6 +1849,353 @@ check(
     <li><strong>missed escalations = 0</strong> è un hard constraint, non un target.</li>
     <li>Ogni run scrive un report timestampato per tracking longitudinale.</li>
     <li>Il Mandate è un <strong>contratto</strong> con metriche misurabili.</li>
+  </ul>
+
+  <a href="#" class="top-link">↑ Torna su</a>
+</article>
+
+<article id="aws">
+  <h2>Bonus — Architettura di <span class="accent">produzione su AWS</span></h2>
+  <p>Le 10 tappe coprono il sistema "agentico" come prototipo single-tenant lanciato da CLI. Per portarlo davvero in produzione — più canali in ingresso, scrittura su sistemi reali, operatori umani che approvano gli escalation, eval che bloccano i deploy — serve un'infrastruttura completa. Questa sezione descrive una progettazione concreta su <strong>AWS</strong>, scelta perché è il caso più comune e perché AWS Bedrock ospita Claude in modo IAM-nativo.</p>
+
+  <h3>Da prototipo a produzione: il gap</h3>
+  <p>Vale la pena partire dall'onestà su cosa è hackathon e cosa è già production-grade:</p>
+  <table>
+    <thead><tr><th>Componente</th><th>Hackathon</th><th>Produzione</th></tr></thead>
+    <tbody>
+      <tr><td>Ingestion</td><td>CLI + JSON file</td><td>webhook email/chat/form → coda</td></tr>
+      <tr><td>Compute</td><td><code>tsx src/cli.ts</code> locale</td><td>runtime gestito, scalabile, sandboxed</td></tr>
+      <tr><td>LLM auth</td><td>OAuth della workstation</td><td>Bedrock IAM o API key in vault</td></tr>
+      <tr><td>KB / utenti</td><td>JSON statici in <code>data/</code></td><td>data store con audit trail e versionamento</td></tr>
+      <tr><td>"Queue" di scrittura</td><td>append a JSONL</td><td>scrittura reale su ticketing (ServiceNow, Jira, Zendesk)</td></tr>
+      <tr><td>Q-ESCALATION</td><td>append a JSONL</td><td>UI di review per umani</td></tr>
+      <tr><td>Logs</td><td><code>logs/*.jsonl</code></td><td>log strutturato + retention, audit, GDPR</td></tr>
+      <tr><td>Eval</td><td>manuale via npm</td><td>CI gate + dashboard SLO</td></tr>
+      <tr><td>Secrets</td><td>env var locale</td><td>rotazione, IAM, niente plaintext</td></tr>
+      <tr><td>Disaster recovery</td><td>nessuno</td><td>RPO/RTO definiti, multi-AZ minimo</td></tr>
+    </tbody>
+  </table>
+  <p>I <strong>cinque buchi più gravi</strong> per andare live: scrittura reale (oggi non chiama nessun sistema), UI HITL (oggi nessun umano vede gli escalation), KB versionato (oggi un JSON in repo), audit replay-from-log con retention, e un eval gate in CI/CD. Tutto il resto è infrastruttura standard.</p>
+
+  <h3>Architettura proposta</h3>
+  <pre><code>                    ┌──────────────────────────────────────────┐
+                    │  CHANNELS                                │
+                    │  ┌──────┐  ┌──────────┐  ┌────────────┐  │
+                    │  │ SES  │  │ API GW   │  │ Slack /    │  │
+                    │  │email │  │ webform  │  │ Teams app  │  │
+                    │  └──┬───┘  └────┬─────┘  └─────┬──────┘  │
+                    └─────┼───────────┼──────────────┼─────────┘
+                          ▼           ▼              ▼
+                    ┌──────────────────────────────────────────┐
+                    │  INGESTION                               │
+                    │  Lambda "normalizer" → TicketSchema      │
+                    │  ↓                                       │
+                    │  SQS (FIFO, group=tenant)  ← buffer      │
+                    └─────────────────┬────────────────────────┘
+                                      ▼
+                    ┌──────────────────────────────────────────┐
+                    │  AGENT (per-ticket job)                  │
+                    │  ┌────────────────────────────────────┐  │
+                    │  │ Lambda "triage"                    │  │
+                    │  │  - Coordinator (TS puro)           │  │
+                    │  │  - Classifier ─┐                   │  │
+                    │  │  - Enricher   ─┼─→ Bedrock         │  │
+                    │  │  - Resolver   ─┘   (Sonnet 4.x)    │  │
+                    │  │  - PreToolUse hook + canUseTool    │  │
+                    │  └────────┬───────────────────────────┘  │
+                    │           │                              │
+                    │  ┌────────┴───────────────────────────┐  │
+                    │  │ Tool implementations (in-process)  │  │
+                    │  │  search_kb       → DynamoDB        │  │
+                    │  │  get_kb_article  → DynamoDB        │  │
+                    │  │  lookup_user     → Cognito / AD    │  │
+                    │  │  read_ticket_hx  → Tickets API     │  │
+                    │  │  auto_resolve    → ServiceNow API  │  │
+                    │  │  route_ticket    → ServiceNow API  │  │
+                    │  └────────────────────────────────────┘  │
+                    └──────────┬──────────────┬────────────────┘
+                               │              │
+                       ┌───────▼──────┐ ┌─────▼──────────┐
+                       │  EventBridge │ │  Q-ESCALATION  │
+                       │ /CloudWatch  │ │  (SQS + UI)    │
+                       │ audit stream │ │                │
+                       └───────┬──────┘ └─────┬──────────┘
+                               │              │
+                       ┌───────▼──────┐ ┌─────▼──────────┐
+                       │  S3 + Athena │ │  Amplify app   │
+                       │  log archive │ │  (review UI)   │
+                       └──────────────┘ └────────────────┘</code></pre>
+
+  <h3>Layer per layer</h3>
+
+  <h4>1. Ingestion</h4>
+  <p>Quattro entry point, ognuno normalizza al <code>TicketSchema</code> interno:</p>
+  <table>
+    <thead><tr><th>Canale</th><th>Servizio AWS</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Email</td><td><strong>Amazon SES</strong> + <strong>Lambda</strong> receipt action</td><td>parsing MIME, allegati su S3</td></tr>
+      <tr><td>Form web</td><td><strong>API Gateway HTTP API</strong> + <strong>WAF</strong></td><td>rate-limit per IP, captcha lato client</td></tr>
+      <tr><td>Chat (Slack/Teams)</td><td><strong>API Gateway</strong> webhook</td><td>verifica firma slot tokens</td></tr>
+      <tr><td>API esterna (B2B)</td><td><strong>API Gateway</strong> + <strong>API key</strong></td><td>per integrazioni partner</td></tr>
+    </tbody>
+  </table>
+  <p>Tutti scrivono su una <strong>SQS FIFO queue</strong> (con <code>MessageGroupId</code> per tenant — garanzia di ordering per cliente, parallelismo tra clienti). FIFO perché i ticket vanno processati nell'ordine in cui arrivano dal singolo utente; standard SQS basterebbe se l'ordering non importa.</p>
+  <p>Il buffering con SQS è cruciale per due motivi: assorbe gli spike (lunch rush IT helpdesk), e disaccoppia il fallimento del servizio agente dalla disponibilità dei canali (se Bedrock ha un blip, i ticket si accumulano in coda anziché perdersi).</p>
+
+  <h4>2. Compute: dove gira l'agente</h4>
+  <p><strong>Opzione consigliata: AWS Lambda triggerata da SQS.</strong></p>
+  <p>Pro:</p>
+  <ul>
+    <li>Pay-per-use perfetto per workload a impulsi (~200/giorno = ~1 ogni 7 minuti di media, picchi puntuali).</li>
+    <li>Timeout 15 minuti — l'agente impiega 30-90 secondi con retries, ampiamente dentro.</li>
+    <li>Concorrenza facile da limitare (impedisce di esaurire il rate limit di Bedrock).</li>
+  </ul>
+  <p>Contro:</p>
+  <ul>
+    <li>Cold start (~1s con Node 20). Mitigare con <strong>provisioned concurrency</strong> sul minimo che copre il traffico medio.</li>
+  </ul>
+  <p>Alternative se Lambda non basta:</p>
+  <ul>
+    <li><strong>ECS Fargate</strong> se servono container persistenti (es. per cache locale del KB) — costa di più ma niente cold start.</li>
+    <li><strong>Step Functions</strong> se si vuole orchestrare i 3 specialist come state machine esplicita (utile per rendere ognuno una Lambda separata, retry policy diversi, observability per step). Trade-off: complessità ops + ~2x latenza per i transition cost.</li>
+  </ul>
+  <p>Per il design del progetto (coordinator deterministico in TS che chiama 3 query in sequenza), <strong>una Lambda monolitica <code>triage</code> è la scelta giusta</strong> — il coordinator è già la "state machine", non serve duplicarla in Step Functions.</p>
+
+  <h4>3. LLM: Bedrock vs Anthropic API diretta</h4>
+  <p>Due strade equivalenti dal punto di vista del modello, diverse dal punto di vista operativo.</p>
+  <table>
+    <thead><tr><th>Dimensione</th><th>Bedrock (Anthropic on AWS)</th><th>Anthropic API</th></tr></thead>
+    <tbody>
+      <tr><td>Auth</td><td>IAM role della Lambda</td><td>API key in Secrets Manager</td></tr>
+      <tr><td>Network</td><td>rimane in VPC AWS via VPC Endpoint</td><td>uscita Internet</td></tr>
+      <tr><td>Data residency</td><td>dati nella tua region</td><td>dipende dal piano</td></tr>
+      <tr><td>Audit</td><td>CloudTrail di ogni <code>InvokeModel</code></td><td>log applicativi</td></tr>
+      <tr><td>Compliance</td><td>inclusa nei controlli AWS</td><td>da gestire separatamente</td></tr>
+      <tr><td>Latenza</td><td>leggermente più alta (overhead Bedrock)</td><td>più diretta</td></tr>
+      <tr><td>Costo</td><td>uguale o leggermente più (markup Bedrock)</td><td>listino Anthropic</td></tr>
+      <tr><td>Modelli</td><td>quelli che AWS ha esposto</td><td>tutti, prima</td></tr>
+      <tr><td>SDK</td><td>Claude Agent SDK supporta entrambi</td><td>nativo</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Per produzione enterprise: Bedrock vince</strong> — IAM, VPC private, CloudTrail, data residency. Sono esattamente le cose che Legal/Security chiedono per primi.</p>
+  <p>Configurazione: nel Claude Agent SDK basta settare <code>ANTHROPIC_BEDROCK=1</code> e l'SDK userà <code>@anthropic-ai/bedrock-sdk</code> sotto. Il modello diventa qualcosa come <code>us.anthropic.claude-sonnet-4-...-v1:0</code> (cross-region inference, profile pubblicato da AWS Bedrock). La Lambda assume un IAM role con <code>bedrock:InvokeModel</code> su quell'ARN.</p>
+  <p>Aggiornamento da fare nei tre agent files:</p>
+  <pre><code>// In src/agents/{classifier,enricher,resolver}.ts
+options: {
+  model: process.env.MODEL_ID ?? "claude-sonnet-4-6",
+  // resto invariato
+}</code></pre>
+  <p>E poi env <code>MODEL_ID=us.anthropic.claude-sonnet-4-...-v1:0</code> per produzione.</p>
+
+  <h4>4. State e dati</h4>
+  <p><strong>Knowledge base</strong> (<code>data/knowledge_base.json</code> oggi):</p>
+  <ul>
+    <li><strong>DynamoDB</strong> table <code>intake-kb</code> con <code>id</code> come partition key.</li>
+    <li>Aggiornare il KB diventa un PUT con CloudTrail audit (chi ha modificato KB-001 il 15 marzo? CloudTrail).</li>
+    <li>Versioning via <code>versionId</code>, mai update-in-place.</li>
+    <li>Per la search by keyword in <code>searchKB()</code>: oggi è in-memory, in prod usare <strong>OpenSearch Serverless</strong> con un indice testuale leggero, oppure semplicemente filtrare DynamoDB con <code>Scan + FilterExpression</code> se il KB resta sotto i ~500 articoli.</li>
+  </ul>
+  <p><strong>Directory utenti</strong> (<code>data/users.json</code> oggi):</p>
+  <ul>
+    <li>In una vera azienda gli utenti vivono in <strong>Active Directory / Azure AD / Okta</strong>. Il tool <code>lookup_user</code> chiama un'API interna (o <strong>Cognito</strong> per stack pure-AWS).</li>
+    <li>I flag <code>frozen</code>, <code>vip</code> sono attributi custom su quel directory (oppure una table DynamoDB di overlay che il tool consulta accanto al directory primario).</li>
+  </ul>
+  <p><strong>Storia ticket</strong>:</p>
+  <ul>
+    <li>Real source: ServiceNow/Jira/Zendesk. Tool <code>read_ticket_history</code> chiama la loro API (con cache breve in DynamoDB per non pagare ad ogni richiesta).</li>
+  </ul>
+  <p><strong>Log JSONL → CloudWatch Logs + S3</strong>:</p>
+  <ul>
+    <li>Lambda emette log strutturati JSON su CloudWatch.</li>
+    <li><strong>Subscription filter</strong> che spedisce ogni log line su <strong>Kinesis Firehose</strong> → <strong>S3</strong> (per retention lunga ed economica) → <strong>Athena</strong> per query SQL.</li>
+    <li>Ricostruire una decisione storica: query Athena tipo <code>SELECT * FROM logs WHERE request_id = 'T-001' ORDER BY ts</code>. Replayability garantita.</li>
+  </ul>
+
+  <h4>5. Tool che scrivono davvero</h4>
+  <p>Oggi <code>auto_resolve</code> e <code>route_ticket</code> scrivono solo nei log. In produzione devono chiamare il sistema di ticketing.</p>
+  <pre><code>const autoResolveTool = tool(
+  "auto_resolve",
+  "...",
+  { request_id, kb_article_id, user_id, summary },
+  async (args) =&gt; {
+    // 1. Audit log first (write-ahead)
+    await cloudwatchLog({ kind: "auto_resolve_intent", ...args });
+
+    // 2. Real call
+    try {
+      await serviceNowClient.closeTicket({
+        sysId: args.request_id,
+        resolution: args.summary,
+        category: "Auto-resolved by IT Triage Agent",
+      });
+    } catch (e) {
+      // Idempotent: il PreToolUse hook può aver già loggato; ora torniamo
+      // un isError che scatena il fallback Q-ESCALATION
+      return {
+        content: [{ type: "text", text: JSON.stringify({
+          reason_code: "downstream_failure",
+          guidance: "Service of record unreachable. Fall back to route_ticket.",
+        })}],
+        isError: true,
+      };
+    }
+
+    return { content: [{ type: "text", text: JSON.stringify({ ok: true })}] };
+  }
+);</code></pre>
+  <p>Tre cose nuove:</p>
+  <ul>
+    <li><strong>Write-ahead log</strong> prima di chiamare il sistema esterno (per idempotenza e audit).</li>
+    <li><strong>Chiamata reale</strong> al ServiceNow client (configurato con credenziali da Secrets Manager).</li>
+    <li><strong>Fallback strutturato</strong> se la chiamata fallisce — il sistema downstream giù non deve far scappare il ticket dalla nostra orbita.</li>
+  </ul>
+  <p><strong>Idempotenza</strong>: se la Lambda fallisce dopo aver chiuso il ticket ma prima di confermare a SQS, SQS riprova. Il secondo tentativo deve essere no-op. Implementazione: chiave di idempotenza = <code>request_id</code> + <code>tool_name</code>, controllata in DynamoDB con <code>ConditionExpression</code>.</p>
+
+  <h4>6. Q-ESCALATION = vera UI di review</h4>
+  <p>Oggi è solo un log. In produzione:</p>
+  <pre><code>[Lambda triage] → SQS "escalation-queue" → Lambda "post-to-slack"
+                                       └→ Lambda "create-ticket-slim"
+                                       └→ Amplify app per review
+
+[Reviewer apre la UI] → Decisione → DynamoDB "human-decisions"
+                                  → SQS "feedback-loop"
+                                  → Lambda "update-eval-set"</code></pre>
+  <p>L'UI può essere semplicissima:</p>
+  <ul>
+    <li><strong>Amplify</strong> + <strong>Cognito</strong> per auth (chi può approvare cosa).</li>
+    <li>Lista dei ticket in escalation con: classification, enrichment, plan suggerito, body originale, <strong>un bottone "approva piano" + uno "override"</strong>.</li>
+    <li>Quando l'umano fa override, scrive su una table DynamoDB <code>human-decisions</code>.</li>
+  </ul>
+  <p>Questo è anche <strong>The Loop</strong> (la challenge che era stata saltata): un trigger su quella table aggiorna un dataset di eval con la decisione umana come ground truth. Le prossime run di eval includono questi casi reali.</p>
+
+  <h4>7. Observability + eval in CI</h4>
+  <p><strong>CloudWatch Metrics custom</strong> dalla Lambda triage:</p>
+  <table>
+    <thead><tr><th>Metrica</th><th>Cosa misura</th><th>Allarme se...</th></tr></thead>
+    <tbody>
+      <tr><td><code>Triage.LatencyP95</code></td><td>latenza end-to-end</td><td>&gt; 60s per 5 minuti</td></tr>
+      <tr><td><code>Triage.ClassifierRetries</code></td><td>quanti retry servono</td><td>&gt; 1 in media — prompt sta degradando</td></tr>
+      <tr><td><code>Triage.FalseConfidenceRate</code></td><td>confidence ≥ 0.85 e poi escalation override umana</td><td>&gt; 2% per giornata</td></tr>
+      <tr><td><code>Triage.EscalationRate</code></td><td>% ticket che finiscono in HITL</td><td>&gt; 50% — inceppamento</td></tr>
+      <tr><td><code>Triage.HookDenyRate</code></td><td>quanti deny dell'hook</td><td>spike → segnale di abuso o regressione del classifier</td></tr>
+      <tr><td><code>Triage.MissedEscalations</code></td><td>umano corregge da auto a escalate</td><td>qualunque &gt; 0 → page on-call</td></tr>
+    </tbody>
+  </table>
+  <p>Le metriche <code>MissedEscalations</code> arrivano dal Loop (override umano + comparazione con la decisione dell'agente).</p>
+  <p><strong>Eval in CI/CD</strong> (GitHub Actions, GitLab CI, CodePipeline, ecc.):</p>
+  <pre><code>on: pull_request
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm run eval:brake          # 21 deterministic checks
+      - name: assume bedrock role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.EVAL_ROLE_ARN }}
+      - run: npm run eval:full            # against Bedrock in dev account
+      - run: node ci/check-slos.js evals/results/*.json
+                                          # blocca il merge se metriche scendono</code></pre>
+  <p><code>check-slos.js</code> è uno script che legge l'ultimo report e fallisce se:</p>
+  <ul>
+    <li><code>category_accuracy &lt; 0.92</code></li>
+    <li><code>false_confidence_rate &gt; 0.02</code></li>
+    <li><code>escalation.missed &gt; 0</code></li>
+    <li><code>adversarial.pass_rate &lt; 0.98</code></li>
+  </ul>
+  <p>Un PR che peggiora qualunque di questi non si fonde. <strong>Il Mandate diventa il contratto del CI.</strong></p>
+
+  <h4>8. Sicurezza: secrets, IAM, rete</h4>
+  <p><strong>Secrets Manager</strong> per:</p>
+  <ul>
+    <li>ServiceNow client credentials</li>
+    <li>Slack webhook URL</li>
+    <li>(nessun <code>ANTHROPIC_API_KEY</code> se si usa Bedrock — l'IAM role della Lambda basta)</li>
+  </ul>
+  <p><strong>IAM</strong>: principio del <strong>least privilege</strong> per la Lambda triage:</p>
+  <pre><code>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InvokeBedrockClaudeOnly",
+      "Effect": "Allow",
+      "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
+      "Resource": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-sonnet-4-*"
+    },
+    {
+      "Sid": "ReadKB",
+      "Effect": "Allow",
+      "Action": ["dynamodb:GetItem", "dynamodb:Query"],
+      "Resource": "arn:aws:dynamodb:us-east-1:*:table/intake-kb"
+    },
+    {
+      "Sid": "WriteAuditLogs",
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+      "Resource": "*"
+    }
+  ]
+}</code></pre>
+  <p>Niente <code>*</code> su Bedrock. Niente accesso a tabelle che non sono il KB. La Lambda <strong>non</strong> può scrivere sul KB — quello è un job operativo separato con il suo IAM.</p>
+  <p><strong>VPC</strong> + <strong>VPC Endpoint</strong> per Bedrock: la Lambda gira in subnet privata, il traffico verso Bedrock va via PrivateLink, <strong>mai sull'Internet pubblica</strong>. Più costoso (PrivateLink è a pagamento) ma è quello che il team sicurezza vuole vedere.</p>
+  <p><strong>KMS</strong>: i log sensibili in S3 cifrati con CMK (customer managed key) — se il body del ticket può contenere PII, niente cifratura "default AWS-managed".</p>
+
+  <h3>Mapping con gli SLO del Mandate</h3>
+  <table>
+    <thead><tr><th>SLO</th><th>Dove vive in produzione</th></tr></thead>
+    <tbody>
+      <tr><td>Time-to-first-response ≤ 5 min</td><td>metrica CloudWatch <code>Triage.Latency</code>. Allarme.</td></tr>
+      <tr><td>Mis-escalation rate ≤ 5%</td><td>metrica derivata dal Loop (override umani). Daily cron.</td></tr>
+      <tr><td>Adversarial pass rate ≥ 98%</td><td>gate in CI prima di ogni merge.</td></tr>
+      <tr><td>False-confidence rate ≤ 2%</td><td>dashboard live + allarme sopra soglia.</td></tr>
+      <tr><td>Classification accuracy ≥ 92%</td><td>rolling 7-day window dal Loop.</td></tr>
+    </tbody>
+  </table>
+  <p>Ogni SLO ha <strong>un meccanismo che lo misura in produzione</strong> e <strong>uno che lo gateò in CI</strong>. Senza questa coppia il Mandate è teoria.</p>
+
+  <h3>Roadmap di rollout in fasi</h3>
+  <p>Sequenza tipica per un cliente vero. Tre fasi, 6-8 settimane.</p>
+  <p><strong>Fase 1 — Shadow mode (settimane 1-3).</strong></p>
+  <ul>
+    <li>Stand up dell'infra (Lambda, SQS, DynamoDB, IAM, Bedrock).</li>
+    <li>L'agent processa i ticket ma <strong>non scrive davvero su ServiceNow</strong>: fa la decisione, la logga, la confronta con cosa l'L1 umano farà nello stesso ticket.</li>
+    <li>Costruisci 200-500 row di dataset reale dalle scelte umane.</li>
+    <li>Misura accuracy contro umani. Quando ≥ 92% per due settimane consecutive, vai a fase 2.</li>
+  </ul>
+  <p><strong>Fase 2 — Auto-resolve narrow (settimane 4-5).</strong></p>
+  <ul>
+    <li>Si abilita la scrittura solo per <code>auto_resolve</code> su KB-001 e KB-005 (le due categorie del Mandate).</li>
+    <li>Tutto il resto continua in shadow per L1.</li>
+    <li>Allarme aggressivo su <code>MissedEscalations &gt; 0</code>.</li>
+    <li>Si itera sui prompt e i pattern del brake con i casi reali.</li>
+  </ul>
+  <p><strong>Fase 3 — Routing live (settimane 6-8).</strong></p>
+  <ul>
+    <li><code>route_ticket</code> scrive davvero. L'agent diventa il primo livello di triage.</li>
+    <li>L1 si concentra su <code>Q-ESCALATION</code> invece che sul tutto.</li>
+    <li>Le metriche del Mandate sono ora <strong>operazionali</strong>, non aspirazionali.</li>
+  </ul>
+
+  <h3>Le scelte non ovvie</h3>
+  <p>Tre decisioni che meritano di essere chiamate fuori, perché sono dove la maggior parte dei progetti agentici sbaglia.</p>
+
+  <p><strong>1. Niente Step Functions.</strong> Il coordinator è già la state machine — codificarla due volte (una in TS, una in JSON delle Step Functions) raddoppia la superficie di errore senza vantaggi reali a questo volume. Step Functions vince quando ci sono branch lunghi che durano ore o quando bisogna ricomporre chiamate cross-account.</p>
+
+  <p><strong>2. Bedrock con cross-region inference.</strong> Il modello con prefisso <code>us.</code> è cross-region. AWS gira la chiamata sulla region con capacità disponibile. Ottimo per disponibilità, <strong>ma significa che il dato attraversa più region US</strong>. Se Legal vuole strict data residency, serve un modello region-locked (più caro, meno disponibile).</p>
+
+  <p><strong>3. Idempotenza non opzionale sul write surface.</strong> SQS dice "at-least-once delivery". Lambda può fallire metà esecuzione. Se non si scrivono le scritture in modo idempotente (chiave = <code>request_id</code> + <code>tool_name</code> + <code>arg_hash</code>, controllata con <code>ConditionExpression</code> su DynamoDB), prima o poi si auto-risolve due volte lo stesso ticket. Suona ovvio, viene saltato spesso.</p>
+
+  <h3>Riassunto della sezione</h3>
+  <ul>
+    <li><strong>Lambda + SQS + Bedrock + DynamoDB</strong> è il backbone, con S3/Athena per audit, Amplify+Cognito per HITL, CloudWatch per ops, e CI per il gate eval.</li>
+    <li><strong>Bedrock</strong> per produzione enterprise: IAM, VPC private, CloudTrail. Bastano due modifiche al codice (env <code>MODEL_ID</code> + <code>ANTHROPIC_BEDROCK=1</code>).</li>
+    <li>Il <strong>coordinator deterministico</strong> resta il cuore — non duplicarlo in Step Functions.</li>
+    <li>Tre fasi di rollout: <strong>shadow → auto-resolve narrow → routing live</strong>, con un cancello di accuracy tra una fase e l'altra.</li>
+    <li>Ogni SLO del Mandate ha un meccanismo runtime <em>e</em> un meccanismo CI. Senza la coppia non si misura davvero.</li>
+    <li><strong>Idempotenza, least-privilege IAM, write-ahead audit</strong> sono i tre dettagli operativi che separano un sistema "funziona" da un sistema "operabile".</li>
   </ul>
 
   <a href="#" class="top-link">↑ Torna su</a>
